@@ -111,6 +111,6 @@ If `file_uri` is a URL or app path, the file name becomes a clickable link. If `
 ## Notes For Collaborators
 
 - The current app is intentionally plain HTML/CSS/JS.
-- The upload UI previews files locally, but it does not yet parse uploaded files into Supabase.
+- The upload UI collects entity/source name and optional period, then previews files locally. It does not yet parse uploaded files into Supabase.
 - Supabase RLS policies must allow public `select` for the frontend tables used by the outcome page.
 - Keep the public Supabase key treated as read-only. Do not add service-role keys to this frontend.

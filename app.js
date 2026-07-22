@@ -502,6 +502,28 @@ function isAllowedFile(file) {
   return allowedFileExtensions.has(getFileExtension(file.name)) || allowedMimeTypes.has(file.type);
 }
 
+function requestUploadMetadata() {
+  const entityNameInput = window.prompt("Enter the entity/source name for this upload. This field is required.");
+
+  if (entityNameInput === null) {
+    return null;
+  }
+
+  const entityName = entityNameInput.trim();
+
+  if (!entityName) {
+    alert("Please enter an entity/source name before uploading the file.");
+    return null;
+  }
+
+  const periodInput = window.prompt("Enter the period for this upload if you know it. This is optional.");
+
+  return {
+    entityName,
+    period: periodInput === null ? "" : periodInput.trim()
+  };
+}
+
 function requestValidatedUpload(files, targetIds) {
   const normalizedFiles = [...files];
   const normalizedTargetIds = [...new Set(targetIds)].filter(Boolean);
@@ -517,7 +539,13 @@ function requestValidatedUpload(files, targetIds) {
     return;
   }
 
-  addUploads(normalizedFiles, normalizedTargetIds);
+  const uploadMetadata = requestUploadMetadata();
+
+  if (!uploadMetadata) {
+    return;
+  }
+
+  addUploads(normalizedFiles, normalizedTargetIds, uploadMetadata);
 }
 
 function revokeUpload(upload) {
@@ -1783,7 +1811,7 @@ function openSingleUpload(id) {
   singleFileInput.click();
 }
 
-function addUploads(files, targetIds) {
+function addUploads(files, targetIds, metadata = {}) {
   const normalizedTargets = [...new Set(targetIds)].map(getTarget).filter(Boolean);
 
   if (!files.length || !normalizedTargets.length) {
@@ -1800,6 +1828,8 @@ function addUploads(files, targetIds) {
       file,
       objectUrl: URL.createObjectURL(file),
       targets: normalizedTargets,
+      entityName: metadata.entityName || "",
+      period: metadata.period || "",
       addedAt: new Date()
     });
   });
@@ -1813,12 +1843,18 @@ function renderFileList() {
         const targetLabel = upload.targets.length === 1
           ? upload.targets[0].label
           : `${upload.targets.length} targets`;
+        const metadataLabel = [
+          formatBytes(upload.size),
+          upload.entityName ? `entity: ${upload.entityName}` : "",
+          upload.period ? `period: ${upload.period}` : "",
+          `attached to ${targetLabel}`
+        ].filter(Boolean).join(" | ");
 
         return `
           <div class="file-item">
             <button class="file-open" type="button" data-preview-id="${upload.id}">
               <span class="file-name">${escapeHtml(upload.name)}</span>
-              <span class="file-meta">${formatBytes(upload.size)} attached to ${escapeHtml(targetLabel)}</span>
+              <span class="file-meta">${escapeHtml(metadataLabel)}</span>
             </button>
             <button class="file-delete" type="button" aria-label="Remove ${escapeHtml(upload.name)}" data-delete-upload-id="${upload.id}">x</button>
           </div>
@@ -1861,6 +1897,14 @@ function renderFilePreview() {
     <div class="preview-detail">
       <strong>Type</strong>
       <span>${escapeHtml(upload.extension.toUpperCase())}</span>
+    </div>
+    <div class="preview-detail">
+      <strong>Entity/source</strong>
+      <span>${escapeHtml(upload.entityName || "Not provided")}</span>
+    </div>
+    <div class="preview-detail">
+      <strong>Period</strong>
+      <span>${escapeHtml(upload.period || "Not provided")}</span>
     </div>
     <div class="preview-detail">
       <strong>Assigned targets</strong>
