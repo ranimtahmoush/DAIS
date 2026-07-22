@@ -444,17 +444,17 @@ const fallbackSectorIcon = makeIcon('<path d="m12 3.9 7.9 3.9-7.9 3.9-7.9-3.9z"/
 const uploadButtonIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 15v4h14v-4"/></svg>';
 
 const logoIconPath = (itemId) => `assets/icons/${itemId}.png`;
-const allowedFileExtensions = new Set(["pdf", "xls", "xlsx", "doc", "docx", "csv"]);
+const allowedFileExtensions = new Set(["pdf", "xls", "xlsx", "doc", "docx", "ppt", "pptx"]);
 const allowedMimeTypes = new Set([
   "application/pdf",
-  "text/csv",
-  "application/csv",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 ]);
-const allowedFileLabel = "PDF, Excel, Word, or CSV";
+const allowedFileLabel = "PDF, Word, Excel, or PowerPoint";
 
 function targetId(categoryId, itemId) {
   return itemId ? `${categoryId}:${itemId}` : categoryId;
@@ -513,7 +513,7 @@ function requestValidatedUpload(files, targetIds) {
   }
 
   if (invalidFiles.length) {
-    alert(`Only ${allowedFileLabel} files are allowed.\n\nInvalid file${invalidFiles.length === 1 ? "" : "s"}:\n${invalidFiles.map((file) => file.name).join("\n")}`);
+    alert(`We couldn't add ${invalidFiles.length === 1 ? "this file" : "these files"} because the file type is not supported.\n\nPlease upload ${allowedFileLabel} files only.\n\nUnsupported file${invalidFiles.length === 1 ? "" : "s"}:\n${invalidFiles.map((file) => file.name).join("\n")}`);
     return;
   }
 
@@ -1870,17 +1870,6 @@ function renderFilePreview() {
 
   if (upload.extension === "pdf") {
     previewContent.innerHTML = `<iframe title="Preview of ${escapeHtml(upload.name)}" src="${upload.objectUrl}"></iframe>`;
-  } else if (upload.extension === "csv") {
-    previewContent.innerHTML = '<pre class="preview-text">Loading CSV preview...</pre>';
-    upload.file.text().then((text) => {
-      if (state.activeUploadId === upload.id) {
-        previewContent.innerHTML = `<pre class="preview-text">${escapeHtml(text.slice(0, 12000))}${text.length > 12000 ? "\n\nPreview truncated." : ""}</pre>`;
-      }
-    }).catch(() => {
-      if (state.activeUploadId === upload.id) {
-        previewContent.innerHTML = '<p class="preview-unavailable">CSV preview could not be loaded.</p>';
-      }
-    });
   } else {
     previewContent.innerHTML = `<p class="preview-unavailable">Preview is not available for ${escapeHtml(upload.extension.toUpperCase())} files. Assignment details are shown above.</p>`;
   }
