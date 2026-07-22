@@ -138,6 +138,63 @@ h2 {
   gap: 8px;
 }
 
+.dashboard-logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  width: 224px;
+  min-height: 64px;
+  padding: 10px 16px 10px 58px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 28%),
+    linear-gradient(130deg, #0f5a55 0%, #0f5a55 45%, #1f7a6b 45%, #1f7a6b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 24px rgba(2, 18, 32, 0.16);
+}
+
+.dashboard-logo::before {
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 76px;
+  background:
+    linear-gradient(135deg, transparent 0 24%, rgba(255, 255, 255, 0.92) 24% 60%, transparent 60%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.16), transparent 65%);
+}
+
+.dashboard-logo-emblem {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  color: #fff;
+}
+
+.dashboard-logo-emblem svg {
+  width: 40px;
+  height: 40px;
+  stroke-width: 1.8;
+}
+
+.dashboard-logo-copy {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  line-height: 1.15;
+  font-size: 0.52rem;
+  font-weight: 800;
+}
+
+.dashboard-logo-copy span:last-child {
+  font-size: 0.48rem;
+  font-weight: 700;
+}
+
 .view-tabs {
   display: inline-flex;
   align-items: center;
@@ -2045,6 +2102,24 @@ h2 {
             <button class="ghost-button" type="button" id="clear-selection">
               Clear
             </button>
+            <div class="dashboard-logo" aria-label="Makkah Province Development Authority">
+              <span class="dashboard-logo-emblem" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M32 14v24"></path>
+                  <path d="M22 18c4-6 16-6 20 0"></path>
+                  <path d="M18 24c7-7 21-7 28 0"></path>
+                  <path d="M24 29c5-4 11-4 16 0"></path>
+                  <path d="M18 46c9-7 19-7 28 0"></path>
+                  <path d="M15 50c9-9 24-9 34 0"></path>
+                  <path d="M21 41l24 14"></path>
+                  <path d="M43 41 19 55"></path>
+                </svg>
+              </span>
+              <span class="dashboard-logo-copy">
+                <span>هيئة تطوير منطقة مكة المكرمة</span>
+                <span>Makkah Province Development Authority</span>
+              </span>
+            </div>
             <input id="bulk-file-input" class="sr-only" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation">
           </div>
         </div>

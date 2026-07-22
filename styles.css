@@ -131,6 +131,63 @@ h2 {
   gap: 8px;
 }
 
+.dashboard-logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  width: 224px;
+  min-height: 64px;
+  padding: 10px 16px 10px 58px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 28%),
+    linear-gradient(130deg, #0f5a55 0%, #0f5a55 45%, #1f7a6b 45%, #1f7a6b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 24px rgba(2, 18, 32, 0.16);
+}
+
+.dashboard-logo::before {
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 76px;
+  background:
+    linear-gradient(135deg, transparent 0 24%, rgba(255, 255, 255, 0.92) 24% 60%, transparent 60%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.16), transparent 65%);
+}
+
+.dashboard-logo-emblem {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  color: #fff;
+}
+
+.dashboard-logo-emblem svg {
+  width: 40px;
+  height: 40px;
+  stroke-width: 1.8;
+}
+
+.dashboard-logo-copy {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  line-height: 1.15;
+  font-size: 0.52rem;
+  font-weight: 800;
+}
+
+.dashboard-logo-copy span:last-child {
+  font-size: 0.48rem;
+  font-weight: 700;
+}
+
 .view-tabs {
   display: inline-flex;
   align-items: center;
