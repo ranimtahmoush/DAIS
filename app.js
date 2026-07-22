@@ -676,6 +676,26 @@ function formatPeriodLabel(period) {
   return period.period_year ? String(period.period_year) : period.frequency_code;
 }
 
+function getSourceFileLabel(version) {
+  const fileUri = String(version?.file_uri || "").trim();
+
+  if (!fileUri) {
+    return `Source version ${version?.version_id || ""}`.trim();
+  }
+
+  return fileUri.split(/[\\/]/).pop() || fileUri;
+}
+
+function getSourceFileHref(version) {
+  const fileUri = String(version?.file_uri || "").trim();
+
+  if (/^(https?:|blob:|data:)/i.test(fileUri) || fileUri.startsWith("/")) {
+    return fileUri;
+  }
+
+  return "";
+}
+
 function buildBackendOutcomeIndicator({
   indicator,
   indicatorVariableRows,
@@ -723,20 +743,51 @@ function buildBackendOutcomeIndicator({
     });
     const contextVariables = [...requiredVariableIds].map((variableId) => {
       const variable = variablesById.get(variableId);
-      const valueRow = variableValues.find((row) => {
-        return row.variable_id === variableId && row.geography_id === geographyId && row.period_id === periodId;
-      });
-      const sourceVersion = valueRow ? versionsById.get(valueRow.version_id) : null;
+      const valueRows = variableValues
+        .filter((row) => {
+          return row.variable_id === variableId && row.geography_id === geographyId && row.period_id === periodId;
+        })
+        .sort((firstRow, secondRow) => {
+          const firstVersion = versionsById.get(firstRow.version_id);
+          const secondVersion = versionsById.get(secondRow.version_id);
+
+          if (Boolean(firstVersion?.is_current) !== Boolean(secondVersion?.is_current)) {
+            return firstVersion?.is_current ? -1 : 1;
+          }
+
+          return Number(secondRow.version_id || 0) - Number(firstRow.version_id || 0);
+        });
+      const valueRow = valueRows.find((row) => versionsById.get(row.version_id)?.is_current) || valueRows[0];
+
+      if (!valueRow) {
+        return {
+          name: variable?.description || variable?.variable_key || `Variable ${variableId}`,
+          key: variable?.variable_key,
+          value: "Pending",
+          unit: variable?.unit || "",
+          confidence: "Low",
+          sources: []
+        };
+      }
 
       return {
         name: variable?.description || variable?.variable_key || `Variable ${variableId}`,
         key: variable?.variable_key,
-        value: valueRow?.value ?? "Pending",
+        value: valueRow.value,
         unit: variable?.unit || "",
-        confidence: confidenceFromScore(valueRow?.confidence),
-        sources: sourceVersion
-          ? [{ name: sourceVersion.file_uri, value: valueRow?.value, unit: variable?.unit || "", isPrimary: Boolean(sourceVersion.is_current) }]
-          : []
+        confidence: confidenceFromScore(valueRow.confidence),
+        sources: valueRows.map((row) => {
+          const sourceVersion = versionsById.get(row.version_id);
+
+          return {
+            name: getSourceFileLabel(sourceVersion),
+            href: getSourceFileHref(sourceVersion),
+            value: row.value,
+            unit: variable?.unit || "",
+            versionId: row.version_id,
+            isPrimary: row === valueRow
+          };
+        })
       };
     });
     const context = {
@@ -872,7 +923,7 @@ async function fetchBackendOutcomeIndicators() {
       ? supabaseClient.from("periods").select("period_id, frequency_code, period_year, period_quarter, period_month").in("period_id", periodIds)
       : Promise.resolve({ data: [] }),
     versionIds.length
-      ? supabaseClient.from("source_file_versions").select("version_id, file_uri, reference_period, is_current").in("version_id", versionIds)
+      ? supabaseClient.from("source_file_versions").select("version_id, version_no, file_uri, reference_period, is_current").in("version_id", versionIds)
       : Promise.resolve({ data: [] })
   ]);
 
@@ -1533,16 +1584,25 @@ function formatVariableValue(variable) {
 }
 
 function renderVariableSources(variable) {
-  if (!variable.sources?.length) {
+  const alternateSources = (variable.sources || []).filter((source) => !source.isPrimary);
+
+  if (!alternateSources.length) {
     return "";
   }
 
   return `
     <table class="variable-sources">
       <tbody>
-      ${variable.sources.filter((source) => !source.isPrimary).map((source) => `
+      ${alternateSources.map((source) => `
         <tr>
-          <td><a href="#" class="variable-source-link" aria-label="Source file ${escapeHtml(source.name)}">${escapeHtml(source.name)}</a></td>
+          <td>
+            <a
+              href="${escapeHtml(source.href || "#")}"
+              class="variable-source-link"
+              aria-label="Source file ${escapeHtml(source.name)}"
+              ${source.href ? 'target="_blank" rel="noreferrer"' : 'aria-disabled="true"'}
+            >${escapeHtml(source.name)}</a>
+          </td>
           <td class="variable-source-value">${escapeHtml(source.value)}${source.unit ? ` ${escapeHtml(source.unit)}` : ""}</td>
         </tr>
       `).join("")}

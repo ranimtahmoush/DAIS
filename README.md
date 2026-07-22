@@ -80,6 +80,24 @@ source_file_versions
 6. The selected location/period view shows the variables, formula, assumptions, and result.
 7. The comparison view filters by one or more levels and one or more periods.
 
+## Variable Source File Versions
+
+Each variable value points to a file version through:
+
+```text
+variable_values.version_id -> source_file_versions.version_id
+```
+
+For the same `variable_id`, `geography_id`, and `period_id`, the UI treats the row whose file version has `source_file_versions.is_current = true` as the main displayed value. Other rows for the same variable/geography/period are shown underneath as alternate source file versions with:
+
+```text
+source_file_versions.file_uri
+variable_values.value
+variables.unit
+```
+
+If `file_uri` is a URL or app path, the file name becomes a clickable link. If `file_uri` is only a plain filename, it is shown as source text but cannot open the file. For private Supabase Storage files, use a backend endpoint or signed URL flow instead of exposing service-role credentials in the frontend.
+
 ## Adding A Backend-Loaded Indicator
 
 1. Add the indicator row in Supabase `indicators`.
