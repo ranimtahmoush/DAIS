@@ -1899,6 +1899,13 @@ h2 {
   box-shadow: 0 0 0 3px rgba(0, 138, 121, 0.14);
 }
 
+.field-error {
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
 .metadata-actions {
   display: flex;
   justify-content: flex-end;
@@ -2147,6 +2154,35 @@ h2 {
 
         <div id="preview-details" class="preview-details"></div>
         <div id="preview-content" class="preview-content"></div>
+      </form>
+    </div>
+
+    <div class="modal-backdrop" id="upload-metadata-modal" hidden>
+      <form class="metadata-dialog" id="upload-metadata-form" aria-labelledby="upload-metadata-title">
+        <div class="metadata-head">
+          <div>
+            <h2 id="upload-metadata-title">Upload details</h2>
+            <p class="muted" id="upload-metadata-summary">Add source details before attaching the selected files.</p>
+          </div>
+          <button class="dialog-close" type="button" id="upload-metadata-close" aria-label="Cancel upload details">x</button>
+        </div>
+
+        <label class="field-label">
+          Entity/source name
+          <input id="upload-entity-name" name="entityName" type="text" autocomplete="organization" required>
+        </label>
+
+        <label class="field-label">
+          Period <span class="muted">(optional)</span>
+          <input id="upload-period" name="period" type="text" placeholder="Example: Academic year 2024/2025">
+        </label>
+
+        <p class="field-error" id="upload-metadata-error" hidden>Please enter an entity/source name.</p>
+
+        <div class="metadata-actions">
+          <button class="ghost-button" type="button" id="upload-metadata-cancel">Cancel</button>
+          <button class="primary-button" type="submit">Attach files</button>
+        </div>
       </form>
     </div>
 

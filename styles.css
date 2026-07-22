@@ -1892,6 +1892,13 @@ h2 {
   box-shadow: 0 0 0 3px rgba(0, 138, 121, 0.14);
 }
 
+.field-error {
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
 .metadata-actions {
   display: flex;
   justify-content: flex-end;

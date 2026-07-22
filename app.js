@@ -45,6 +45,7 @@ const state = {
   categories: [],
   uploads: [],
   pendingUploadTarget: null,
+  pendingUploadRequest: null,
   activeUploadId: null,
   isLoading: true,
   isRefreshing: false,
@@ -79,6 +80,14 @@ const previewSummary = document.querySelector("#preview-summary");
 const previewDetails = document.querySelector("#preview-details");
 const previewContent = document.querySelector("#preview-content");
 const previewCloseButton = document.querySelector("#preview-close");
+const uploadMetadataModal = document.querySelector("#upload-metadata-modal");
+const uploadMetadataForm = document.querySelector("#upload-metadata-form");
+const uploadMetadataSummary = document.querySelector("#upload-metadata-summary");
+const uploadEntityNameInput = document.querySelector("#upload-entity-name");
+const uploadPeriodInput = document.querySelector("#upload-period");
+const uploadMetadataError = document.querySelector("#upload-metadata-error");
+const uploadMetadataCloseButton = document.querySelector("#upload-metadata-close");
+const uploadMetadataCancelButton = document.querySelector("#upload-metadata-cancel");
 const clearConfirmModal = document.querySelector("#clear-confirm-modal");
 const clearConfirmCopy = document.querySelector("#clear-confirm-copy");
 const clearConfirmCancelButton = document.querySelector("#clear-confirm-cancel");
@@ -502,28 +511,6 @@ function isAllowedFile(file) {
   return allowedFileExtensions.has(getFileExtension(file.name)) || allowedMimeTypes.has(file.type);
 }
 
-function requestUploadMetadata() {
-  const entityNameInput = window.prompt("Enter the entity/source name for this upload. This field is required.");
-
-  if (entityNameInput === null) {
-    return null;
-  }
-
-  const entityName = entityNameInput.trim();
-
-  if (!entityName) {
-    alert("Please enter an entity/source name before uploading the file.");
-    return null;
-  }
-
-  const periodInput = window.prompt("Enter the period for this upload if you know it. This is optional.");
-
-  return {
-    entityName,
-    period: periodInput === null ? "" : periodInput.trim()
-  };
-}
-
 function requestValidatedUpload(files, targetIds) {
   const normalizedFiles = [...files];
   const normalizedTargetIds = [...new Set(targetIds)].filter(Boolean);
@@ -539,13 +526,7 @@ function requestValidatedUpload(files, targetIds) {
     return;
   }
 
-  const uploadMetadata = requestUploadMetadata();
-
-  if (!uploadMetadata) {
-    return;
-  }
-
-  addUploads(normalizedFiles, normalizedTargetIds, uploadMetadata);
+  openUploadMetadataModal(normalizedFiles, normalizedTargetIds);
 }
 
 function revokeUpload(upload) {
@@ -1811,6 +1792,54 @@ function openSingleUpload(id) {
   singleFileInput.click();
 }
 
+function openUploadMetadataModal(files, targetIds) {
+  const normalizedTargets = [...new Set(targetIds)].map(getTarget).filter(Boolean);
+  const targetLabel = normalizedTargets.length === 1
+    ? normalizedTargets[0].label
+    : `${normalizedTargets.length} targets`;
+
+  state.pendingUploadRequest = {
+    files: [...files],
+    targetIds: [...new Set(targetIds)].filter(Boolean)
+  };
+
+  uploadMetadataSummary.textContent = `${files.length} file${files.length === 1 ? "" : "s"} will be attached to ${targetLabel}.`;
+  uploadMetadataForm.reset();
+  uploadMetadataError.hidden = true;
+  uploadMetadataModal.hidden = false;
+  uploadEntityNameInput.focus();
+}
+
+function closeUploadMetadataModal() {
+  state.pendingUploadRequest = null;
+  uploadMetadataModal.hidden = true;
+  uploadMetadataForm.reset();
+  uploadMetadataError.hidden = true;
+}
+
+function submitUploadMetadata() {
+  const pendingUpload = state.pendingUploadRequest;
+  const entityName = uploadEntityNameInput.value.trim();
+  const period = uploadPeriodInput.value.trim();
+
+  if (!pendingUpload) {
+    closeUploadMetadataModal();
+    return;
+  }
+
+  if (!entityName) {
+    uploadMetadataError.hidden = false;
+    uploadEntityNameInput.focus();
+    return;
+  }
+
+  addUploads(pendingUpload.files, pendingUpload.targetIds, {
+    entityName,
+    period
+  });
+  closeUploadMetadataModal();
+}
+
 function addUploads(files, targetIds, metadata = {}) {
   const normalizedTargets = [...new Set(targetIds)].map(getTarget).filter(Boolean);
 
@@ -2279,6 +2308,29 @@ previewModal.addEventListener("click", (event) => {
   }
 });
 
+uploadMetadataForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitUploadMetadata();
+});
+
+uploadEntityNameInput.addEventListener("input", () => {
+  uploadMetadataError.hidden = true;
+});
+
+uploadMetadataCloseButton.addEventListener("click", () => {
+  closeUploadMetadataModal();
+});
+
+uploadMetadataCancelButton.addEventListener("click", () => {
+  closeUploadMetadataModal();
+});
+
+uploadMetadataModal.addEventListener("click", (event) => {
+  if (event.target === uploadMetadataModal) {
+    closeUploadMetadataModal();
+  }
+});
+
 clearConfirmCancelButton.addEventListener("click", () => {
   closeClearConfirm();
 });
@@ -2296,6 +2348,10 @@ clearConfirmModal.addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !previewModal.hidden) {
     closeFilePreview();
+  }
+
+  if (event.key === "Escape" && !uploadMetadataModal.hidden) {
+    closeUploadMetadataModal();
   }
 
   if (event.key === "Escape" && !clearConfirmModal.hidden) {
