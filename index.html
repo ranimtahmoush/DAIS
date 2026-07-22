@@ -1833,8 +1833,8 @@ h2 {
 }
 
 .metadata-dialog {
-  width: min(460px, 100%);
-  padding: 18px;
+  width: min(520px, 100%);
+  padding: 22px;
   background: #fff;
   border: 1px solid var(--line);
   box-shadow: 0 24px 70px rgba(25, 32, 29, 0.24);
@@ -1850,7 +1850,7 @@ h2 {
 
 .metadata-head h2 {
   margin-bottom: 4px;
-  font-size: 1.05rem;
+  font-size: 1.18rem;
 }
 
 .dialog-close {
@@ -1865,21 +1865,28 @@ h2 {
 
 .field-label {
   display: grid;
-  gap: 6px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 14px;
   color: var(--text);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 900;
+}
+
+.field-optional {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .field-label input {
   width: 100%;
-  min-height: 40px;
-  padding: 0 10px;
+  min-height: 46px;
+  padding: 0 12px;
   color: var(--text);
   background: var(--panel);
   border: 1px solid var(--line);
   outline: 0;
+  font-size: 0.96rem;
 }
 
 .field-label textarea {
@@ -2173,7 +2180,7 @@ h2 {
         </label>
 
         <label class="field-label">
-          Period <span class="muted">(optional)</span>
+          Period <span class="field-optional">(optional)</span>
           <input id="upload-period" name="period" type="text" placeholder="Example: Academic year 2024/2025">
         </label>
 
