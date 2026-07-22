@@ -65,7 +65,6 @@ const board = document.querySelector("#category-board");
 const selectedList = document.querySelector("#selected-list");
 const selectionHelp = document.querySelector("#selection-help");
 const clearSelectionButton = document.querySelector("#clear-selection");
-const uploadSelectedButton = document.querySelector("#upload-selected-button");
 const panelToggleButton = document.querySelector("#panel-toggle");
 const panelRestoreButton = document.querySelector("#panel-restore");
 const bulkFileInput = document.querySelector("#bulk-file-input");
@@ -2072,7 +2071,6 @@ function render() {
   renderSelectedList();
   renderFileList();
   renderOutcome();
-  uploadSelectedButton.disabled = getEffectiveSelectedTargetIds().length === 0;
   appShell.classList.toggle("is-panel-collapsed", state.panelCollapsed);
   appShell.classList.toggle("is-outcome-view", state.activeView === "outcome");
   panelToggleButton.setAttribute("aria-expanded", String(!state.panelCollapsed));
@@ -2221,12 +2219,6 @@ selectedList.addEventListener("click", (event) => {
 clearSelectionButton.addEventListener("click", () => {
   state.selected.clear();
   render();
-});
-
-uploadSelectedButton.addEventListener("click", () => {
-  if (getEffectiveSelectedTargetIds().length) {
-    bulkFileInput.click();
-  }
 });
 
 panelToggleButton.addEventListener("click", () => {
