@@ -91,6 +91,10 @@ const clearConfirmModal = document.querySelector("#clear-confirm-modal");
 const clearConfirmCopy = document.querySelector("#clear-confirm-copy");
 const clearConfirmCancelButton = document.querySelector("#clear-confirm-cancel");
 const clearConfirmActionButton = document.querySelector("#clear-confirm-action");
+const unsupportedFileModal = document.querySelector("#unsupported-file-modal");
+const unsupportedFileList = document.querySelector("#unsupported-file-list");
+const unsupportedFileCloseButton = document.querySelector("#unsupported-file-close");
+const unsupportedFileActionButton = document.querySelector("#unsupported-file-action");
 const outcomeHead = document.querySelector(".outcome-head");
 const outcomeBackButton = document.querySelector(".outcome-head-back");
 const outcomeKicker = document.querySelector("#outcome-kicker");
@@ -116,12 +120,6 @@ const SUPABASE_URL = "https://neqaxhvlvzrdokkccrdy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_NNKHOkrqxKHBz05yTRbfiw_g3F8v5Sd";
 const INDICATORS_TABLE = "indicators";
 const AUTO_REFRESH_MS = 5000;
-const OUTCOME_INDICATOR_UIDS = [
-  "school-capacity-pressure",
-  "average-students-school",
-  "new-schools-needed",
-  "coverage-readiness"
-];
 const supabaseClient = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
   : null;
@@ -462,7 +460,6 @@ const allowedMimeTypes = new Set([
   "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 ]);
-const allowedFileLabel = "PDF, Word, Excel, or PowerPoint";
 
 function targetId(categoryId, itemId) {
   return itemId ? `${categoryId}:${itemId}` : categoryId;
@@ -510,6 +507,19 @@ function isAllowedFile(file) {
   return allowedFileExtensions.has(getFileExtension(file.name)) || allowedMimeTypes.has(file.type);
 }
 
+function openUnsupportedFileModal(files) {
+  unsupportedFileList.innerHTML = files.map((file) => {
+    return `<span>${escapeHtml(file.name)}</span>`;
+  }).join("");
+  unsupportedFileModal.hidden = false;
+  unsupportedFileActionButton.focus();
+}
+
+function closeUnsupportedFileModal() {
+  unsupportedFileModal.hidden = true;
+  unsupportedFileList.innerHTML = "";
+}
+
 function requestValidatedUpload(files, targetIds) {
   const normalizedFiles = [...files];
   const normalizedTargetIds = [...new Set(targetIds)].filter(Boolean);
@@ -521,7 +531,7 @@ function requestValidatedUpload(files, targetIds) {
   }
 
   if (invalidFiles.length) {
-    alert(`We couldn't add ${invalidFiles.length === 1 ? "this file" : "these files"} because the file type is not supported.\n\nPlease upload ${allowedFileLabel} files only.\n\nUnsupported file${invalidFiles.length === 1 ? "" : "s"}:\n${invalidFiles.map((file) => file.name).join("\n")}`);
+    openUnsupportedFileModal(invalidFiles);
     return;
   }
 
@@ -628,12 +638,6 @@ async function fetchSectorCounts() {
 
     from += pageSize;
   }
-
-  const uniqueSectors = [...new Set(indicators.map((indicator) => indicator.sector))];
-  console.log("Supabase indicators rows:", indicators);
-  console.log("Supabase visible indicator row count:", indicators.length);
-  console.log("Unique indicator sector values:", uniqueSectors);
-  console.log("Normalized indicator sector values:", uniqueSectors.map(normalizeSector));
 
   if (!indicators.length) {
     console.warn("Supabase returned 0 visible indicators to the publishable key. Counts will stay 0 until indicators rows are readable by this frontend.");
@@ -826,6 +830,7 @@ function buildBackendOutcomeIndicator({
     name: indicator.name,
     value: baseContext.value || "Pending",
     formula: indicator.formula_description || indicator.formula_python_expr || "",
+    formula_python_expr: indicator.formula_python_expr || "",
     geography: baseContext.geography || "",
     period: baseContext.period || "",
     confidence: baseContext.confidence || "High",
@@ -844,13 +849,15 @@ async function fetchBackendOutcomeIndicators() {
   const { data: indicators, error: indicatorsError } = await supabaseClient
     .from("indicators")
     .select("indicator_id, uid, name, theme, sector, definition, unit, frequency, formula_description, formula_python_expr")
-    .in("uid", OUTCOME_INDICATOR_UIDS);
+    .not("formula_python_expr", "is", null);
 
   if (indicatorsError) {
     throw indicatorsError;
   }
 
-  const indicatorRows = asList(indicators);
+  const indicatorRows = asList(indicators).filter((indicator) => {
+    return Boolean(getFormulaExpression(indicator));
+  });
   const indicatorIds = indicatorRows.map((indicator) => indicator.indicator_id);
 
   if (!indicatorIds.length) {
@@ -947,16 +954,18 @@ async function fetchBackendOutcomeIndicators() {
     throw versionsResponse.error;
   }
 
-  return indicatorRows.map((indicator) => buildBackendOutcomeIndicator({
-    indicator,
-    indicatorVariableRows: indicatorVariableRows.filter((row) => row.indicator_id === indicator.indicator_id),
-    variables: asList(variablesResponse.data),
-    variableValues,
-    indicatorValues: indicatorValues.filter((row) => row.indicator_id === indicator.indicator_id),
-    geographies: asList(geographiesResponse.data),
-    periods: asList(periodsResponse.data),
-    versions: asList(versionsResponse.data)
-  }));
+  return indicatorRows
+    .map((indicator) => buildBackendOutcomeIndicator({
+      indicator,
+      indicatorVariableRows: indicatorVariableRows.filter((row) => row.indicator_id === indicator.indicator_id),
+      variables: asList(variablesResponse.data),
+      variableValues,
+      indicatorValues: indicatorValues.filter((row) => row.indicator_id === indicator.indicator_id),
+      geographies: asList(geographiesResponse.data),
+      periods: asList(periodsResponse.data),
+      versions: asList(versionsResponse.data)
+    }))
+    .filter((indicator) => indicator.contexts.length && indicator.contexts.some((context) => Number.isFinite(context.rawValue)));
 }
 
 async function loadBackendOutcomeIndicators() {
@@ -1186,79 +1195,170 @@ function createFormulaInputs(variables = []) {
   }, {});
 }
 
-function hasFormulaInput(inputs, key) {
-  return Number.isFinite(inputs[key]);
+const FORMULA_FUNCTIONS = {
+  abs: "Math.abs",
+  ceil: "Math.ceil",
+  floor: "Math.floor",
+  greatest: "Math.max",
+  least: "Math.min",
+  max: "Math.max",
+  min: "Math.min",
+  round: "Math.round"
+};
+
+function getFormulaExpression(indicator) {
+  const formula = String(indicator.formula_python_expr || indicator.formulaExpression || "").trim();
+
+  if (!formula) {
+    return "";
+  }
+
+  if (formula.includes("=")) {
+    return formula.slice(formula.indexOf("=") + 1).trim();
+  }
+
+  return formula;
+}
+
+function getNextFormulaCharacter(expression, startIndex) {
+  for (let index = startIndex; index < expression.length; index += 1) {
+    if (!/\s/.test(expression[index])) {
+      return expression[index];
+    }
+  }
+
+  return "";
+}
+
+function compileFormulaExpression(expression, inputs) {
+  let compiledExpression = "";
+  let index = 0;
+
+  while (index < expression.length) {
+    const character = expression[index];
+
+    if (/\s/.test(character)) {
+      index += 1;
+      continue;
+    }
+
+    if (/[0-9.]/.test(character)) {
+      const match = expression.slice(index).match(/^\d+(?:\.\d+)?/);
+
+      if (!match) {
+        return "";
+      }
+
+      compiledExpression += match[0];
+      index += match[0].length;
+      continue;
+    }
+
+    if (/[A-Za-z_]/.test(character)) {
+      const match = expression.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+      const token = match[0];
+      const tokenKey = token.toLowerCase();
+      const nextCharacter = getNextFormulaCharacter(expression, index + token.length);
+
+      if (nextCharacter === "(" && FORMULA_FUNCTIONS[tokenKey]) {
+        compiledExpression += FORMULA_FUNCTIONS[tokenKey];
+      } else if (Object.prototype.hasOwnProperty.call(inputs, token) && Number.isFinite(inputs[token])) {
+        compiledExpression += `(${inputs[token]})`;
+      } else {
+        return "";
+      }
+
+      index += token.length;
+      continue;
+    }
+
+    if ("+-*/(),".includes(character)) {
+      compiledExpression += character;
+      index += 1;
+      continue;
+    }
+
+    return "";
+  }
+
+  return compiledExpression;
 }
 
 function calculateIndicatorValue(indicator, variables) {
   const inputs = createFormulaInputs(variables);
-  const indicatorId = indicator.id || indicator.uid;
+  const formulaExpression = getFormulaExpression(indicator);
+  const compiledExpression = compileFormulaExpression(formulaExpression, inputs);
 
-  if (indicatorId === "school-capacity-pressure") {
-    if (!hasFormulaInput(inputs, "total_students_enrolled")
-      || !hasFormulaInput(inputs, "total_public_schools")
-      || !hasFormulaInput(inputs, "average_school_capacity")
-      || inputs.total_public_schools === 0
-      || inputs.average_school_capacity === 0) {
-      return null;
-    }
-
-    return (inputs.total_students_enrolled / (inputs.total_public_schools * inputs.average_school_capacity)) * 100;
+  if (!compiledExpression) {
+    return null;
   }
 
-  if (indicatorId === "average-students-school") {
-    if (!hasFormulaInput(inputs, "total_students_enrolled")
-      || !hasFormulaInput(inputs, "total_public_schools")
-      || inputs.total_public_schools === 0) {
-      return null;
-    }
+  try {
+    const value = Function(`"use strict"; return (${compiledExpression});`)();
 
-    return inputs.total_students_enrolled / inputs.total_public_schools;
+    return Number.isFinite(value) ? value : null;
+  } catch (error) {
+    console.warn("Formula calculation failed:", {
+      indicator: indicator.id || indicator.uid || indicator.name,
+      formulaExpression,
+      error
+    });
+    return null;
+  }
+}
+
+function formatNumber(value, decimals = 1) {
+  const roundedValue = Number.isInteger(value) ? value : Number(value.toFixed(decimals));
+  return roundedValue.toLocaleString("en-US");
+}
+
+function formatUnitLabel(unit = "") {
+  const normalizedUnit = String(unit).trim();
+
+  if (!normalizedUnit || normalizedUnit === "%") {
+    return "";
   }
 
-  if (indicatorId === "new-schools-needed") {
-    if (!hasFormulaInput(inputs, "total_students_enrolled")
-      || !hasFormulaInput(inputs, "average_school_capacity")
-      || !hasFormulaInput(inputs, "target_utilization_threshold")
-      || !hasFormulaInput(inputs, "current_public_schools")
-      || inputs.average_school_capacity === 0
-      || inputs.target_utilization_threshold === 0) {
-      return null;
-    }
-
-    const usableCapacityPerSchool = inputs.average_school_capacity * (inputs.target_utilization_threshold / 100);
-    return Math.max(0, Math.ceil(inputs.total_students_enrolled / usableCapacityPerSchool) - inputs.current_public_schools);
+  if (/^number of units$/i.test(normalizedUnit)) {
+    return "units";
   }
 
-  if (indicatorId === "coverage-readiness") {
-    if (!hasFormulaInput(inputs, "neighborhoods_within_standard")
-      || !hasFormulaInput(inputs, "total_neighborhoods")
-      || inputs.total_neighborhoods === 0) {
-      return null;
-    }
-
-    return (inputs.neighborhoods_within_standard / inputs.total_neighborhoods) * 100;
+  if (/^rooms$/i.test(normalizedUnit)) {
+    return "rooms";
   }
 
-  return null;
+  if (/^million tourists$/i.test(normalizedUnit)) {
+    return "million tourists";
+  }
+
+  if (/^number of establishments? per 100 000 inhabitants$/i.test(normalizedUnit)) {
+    return "establishments per 100,000 inhabitants";
+  }
+
+  if (/^number of stays per 100 000 population$/i.test(normalizedUnit)) {
+    return "stays per 100,000 population";
+  }
+
+  return normalizedUnit;
 }
 
 function formatIndicatorResult(indicator, value) {
   const indicatorId = indicator.id || indicator.uid;
+  const unit = formatUnitLabel(indicator.unit);
 
   if (!Number.isFinite(value)) {
     return "Pending";
   }
 
   if (indicatorId === "average-students-school" || indicatorId === "new-schools-needed") {
-    return String(Math.round(value));
+    return formatNumber(Math.round(value), 0);
   }
 
-  if (indicatorId === "coverage-readiness") {
-    return `${Math.round(value)}%`;
+  if (indicator.unit === "%") {
+    return `${formatNumber(value)}%`;
   }
 
-  return `${value.toFixed(1)}%`;
+  return unit ? `${formatNumber(value)} ${unit}` : formatNumber(value);
 }
 
 function createCalculatedContext(indicator, context) {
@@ -2337,6 +2437,20 @@ clearConfirmModal.addEventListener("click", (event) => {
   }
 });
 
+unsupportedFileCloseButton.addEventListener("click", () => {
+  closeUnsupportedFileModal();
+});
+
+unsupportedFileActionButton.addEventListener("click", () => {
+  closeUnsupportedFileModal();
+});
+
+unsupportedFileModal.addEventListener("click", (event) => {
+  if (event.target === unsupportedFileModal) {
+    closeUnsupportedFileModal();
+  }
+});
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !previewModal.hidden) {
     closeFilePreview();
@@ -2348,6 +2462,10 @@ document.addEventListener("keydown", (event) => {
 
   if (event.key === "Escape" && !clearConfirmModal.hidden) {
     closeClearConfirm();
+  }
+
+  if (event.key === "Escape" && !unsupportedFileModal.hidden) {
+    closeUnsupportedFileModal();
   }
 });
 

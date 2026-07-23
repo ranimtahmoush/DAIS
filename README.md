@@ -73,10 +73,10 @@ source_file_versions
 ## Outcome Calculation Flow
 
 1. `app.js` loads the fallback outcome model.
-2. The app requests matching indicator rows from Supabase.
-3. If Supabase rows are readable, they replace the matching fallback indicator.
+2. The app requests formula-ready indicator rows from Supabase.
+3. If Supabase rows are readable, they replace or extend the fallback indicators.
 4. The UI builds variable inputs by `variable_key`.
-5. The result is calculated in the browser from `variable_values`.
+5. The result is calculated in the browser from `formula_python_expr` and current `variable_values`.
 6. The selected location/period view shows the variables, formula, assumptions, and result.
 7. The comparison view filters by one or more levels and one or more periods.
 
@@ -105,8 +105,8 @@ If `file_uri` is a URL or app path, the file name becomes a clickable link. If `
 3. Link them in `indicator_variables`.
 4. Add geography and period rows.
 5. Add actual numbers in `variable_values`.
-6. Add the indicator `uid` to `OUTCOME_INDICATOR_UIDS` in `app.js`.
-7. Add calculation logic in `calculateIndicatorValue()` if the formula is new.
+6. Make sure the indicator has a non-empty `formula_python_expr`.
+7. Refresh the app. The indicator appears automatically once it has a complete variable set for at least one geography and period.
 
 ## Notes For Collaborators
 

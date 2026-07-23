@@ -97,9 +97,11 @@ label {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  padding: 0;
   background: transparent;
   border: 0;
   box-shadow: none;
+  backdrop-filter: none;
 }
 
 .topbar {
@@ -107,11 +109,30 @@ label {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 18px;
-  background: rgba(255, 254, 250, 0.38);
-  border: 1px solid rgba(226, 222, 214, 0.55);
-  box-shadow: 0 12px 30px rgba(25, 32, 29, 0.06);
-  backdrop-filter: blur(14px);
+  padding: 6px 4px 14px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.topbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.selection-clear {
+  min-height: 44px;
+  padding: 0 18px;
+  color: var(--teal-dark);
+  background: rgba(229, 246, 242, 0.82);
+  border-color: rgba(31, 143, 127, 0.14);
+}
+
+.app-shell.is-outcome-view .selection-clear {
+  display: none;
 }
 
 h1,
@@ -138,61 +159,43 @@ h2 {
   gap: 8px;
 }
 
+.toolbar {
+  margin-left: auto;
+}
+
 .dashboard-logo {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 9px;
-  width: 224px;
-  min-height: 64px;
-  padding: 10px 16px 10px 58px;
+  width: 485px;
+  height: 108px;
   overflow: hidden;
-  color: #fff;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 28%),
-    linear-gradient(130deg, #0f5a55 0%, #0f5a55 45%, #1f7a6b 45%, #1f7a6b 100%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 10px 24px rgba(2, 18, 32, 0.16);
+  isolation: isolate;
+  background: linear-gradient(135deg, #0f4d48 0%, #0d5b54 58%, #164c47 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 28px rgba(2, 18, 32, 0.18);
 }
 
 .dashboard-logo::before {
   content: "";
   position: absolute;
-  inset: -1px auto -1px -1px;
-  width: 76px;
+  inset: 0;
+  pointer-events: none;
   background:
-    linear-gradient(135deg, transparent 0 24%, rgba(255, 255, 255, 0.92) 24% 60%, transparent 60%),
-    linear-gradient(45deg, rgba(255, 255, 255, 0.16), transparent 65%);
+    linear-gradient(115deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 58px),
+    linear-gradient(45deg, transparent 0 70%, rgba(255, 255, 255, 0.08) 70% 100%);
 }
 
-.dashboard-logo-emblem {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  min-width: 42px;
-  height: 42px;
-  color: #fff;
-}
-
-.dashboard-logo-emblem svg {
-  width: 40px;
-  height: 40px;
-  stroke-width: 1.8;
-}
-
-.dashboard-logo-copy {
-  display: grid;
-  gap: 2px;
-  text-align: right;
-  line-height: 1.15;
-  font-size: 0.52rem;
-  font-weight: 800;
-}
-
-.dashboard-logo-copy span:last-child {
-  font-size: 0.48rem;
-  font-weight: 700;
+.dashboard-logo-image {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 440px;
+  height: 100%;
+  margin: 0 auto;
+  object-fit: cover;
+  object-position: center;
+  mix-blend-mode: screen;
+  filter: grayscale(1) brightness(3.9) contrast(1.16);
+  opacity: 0.98;
 }
 
 .view-tabs {
@@ -340,23 +343,23 @@ h2 {
 .board-wrap {
   flex: 1;
   overflow: auto;
-  padding: 10px 10px 16px;
+  padding: 0;
   background: transparent;
 }
 
 .category-board {
   display: grid;
   grid-template-columns: repeat(6, minmax(246px, 1fr));
-  gap: 10px;
+  gap: 8px;
   min-height: 100%;
   min-width: 1526px;
 }
 
 .category-column {
-  min-height: max(560px, calc(100vh - 155px));
+  min-height: max(560px, calc(100vh - 174px));
   overflow: hidden;
-  background: rgba(249, 247, 242, 0.88);
-  border: 1px solid rgba(226, 222, 214, 0.82);
+  background: rgba(249, 247, 242, 0.78);
+  border: 1px solid rgba(226, 222, 214, 0.68);
 }
 
 .category-header {
@@ -1897,6 +1900,50 @@ h2 {
   box-shadow: 0 24px 70px rgba(25, 32, 29, 0.24);
 }
 
+.notice-dialog {
+  width: min(500px, 100%);
+  padding: 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 70px rgba(25, 32, 29, 0.24);
+}
+
+.notice-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+  color: var(--danger);
+  background: #f9e8e6;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.notice-dialog h2 {
+  margin-bottom: 8px;
+  font-size: 1.18rem;
+}
+
+.notice-list {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 12px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.notice-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
 .metadata-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2034,6 +2081,16 @@ h2 {
     flex-direction: column;
   }
 
+  .topbar-controls,
+  .toolbar,
+  .dashboard-logo {
+    width: 100%;
+  }
+
+  .toolbar {
+    margin-left: 0;
+  }
+
   .outcome-metrics,
   .outcome-context,
   .indicator-tabs,
@@ -2049,10 +2106,6 @@ h2 {
 
   .context-mode-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .toolbar {
-    width: 100%;
   }
 
   .primary-button,
@@ -2090,35 +2143,22 @@ h2 {
       <section class="workspace" aria-labelledby="page-title">
         <div class="topbar">
           <h1 id="page-title" class="sr-only">Indicator dashboard</h1>
-          <div class="view-tabs" role="tablist" aria-label="Dashboard views">
-            <button class="view-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="dashboard-view" data-view-tab="dashboard">
-              Dashboard
-            </button>
-            <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="outcome-view" data-view-tab="outcome">
-              Outcome
-            </button>
-          </div>
-          <div class="toolbar" aria-label="Selection controls">
-            <button class="ghost-button" type="button" id="clear-selection">
+          <div class="topbar-controls">
+            <div class="view-tabs" role="tablist" aria-label="Dashboard views">
+              <button class="view-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="dashboard-view" data-view-tab="dashboard">
+                Dashboard
+              </button>
+              <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="outcome-view" data-view-tab="outcome">
+                Outcome
+              </button>
+            </div>
+            <button class="ghost-button selection-clear" type="button" id="clear-selection">
               Clear
             </button>
+          </div>
+          <div class="toolbar" aria-label="Dashboard brand">
             <div class="dashboard-logo" aria-label="Makkah Province Development Authority">
-              <span class="dashboard-logo-emblem" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M32 14v24"></path>
-                  <path d="M22 18c4-6 16-6 20 0"></path>
-                  <path d="M18 24c7-7 21-7 28 0"></path>
-                  <path d="M24 29c5-4 11-4 16 0"></path>
-                  <path d="M18 46c9-7 19-7 28 0"></path>
-                  <path d="M15 50c9-9 24-9 34 0"></path>
-                  <path d="M21 41l24 14"></path>
-                  <path d="M43 41 19 55"></path>
-                </svg>
-              </span>
-              <span class="dashboard-logo-copy">
-                <span>هيئة تطوير منطقة مكة المكرمة</span>
-                <span>Makkah Province Development Authority</span>
-              </span>
+              <img class="dashboard-logo-image" src="assets/MPDA_Survey_Logo.png" alt="Makkah Province Development Authority">
             </div>
             <input id="bulk-file-input" class="sr-only" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation">
           </div>
@@ -2272,6 +2312,23 @@ h2 {
         <div class="confirm-actions">
           <button class="ghost-button" type="button" id="clear-confirm-cancel">Cancel</button>
           <button class="danger-button" type="button" id="clear-confirm-action">Clear files</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="unsupported-file-modal" hidden>
+      <div class="notice-dialog" role="dialog" aria-modal="true" aria-labelledby="unsupported-file-title">
+        <div class="metadata-head">
+          <div>
+            <div class="notice-icon" aria-hidden="true">!</div>
+            <h2 id="unsupported-file-title">File type not supported</h2>
+            <p class="muted">Please upload PDF, Word, Excel, or PowerPoint files only.</p>
+          </div>
+          <button class="dialog-close" type="button" id="unsupported-file-close" aria-label="Close unsupported file message">x</button>
+        </div>
+        <div class="notice-list" id="unsupported-file-list" aria-label="Unsupported files"></div>
+        <div class="notice-actions">
+          <button class="primary-button" type="button" id="unsupported-file-action">Got it</button>
         </div>
       </div>
     </div>
