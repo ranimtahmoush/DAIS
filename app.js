@@ -1,4 +1,4 @@
-﻿const sectorPresentation = {
+const sectorPresentation = {
   "Healthcare": { group: "social", groupTitle: "Social", icon: "healthcare" },
   "Culture, Ent. & Sports": { group: "social", groupTitle: "Social", icon: "culture" },
   "Education": { group: "social", groupTitle: "Social", icon: "education" },
@@ -125,326 +125,12 @@ const supabaseClient = window.supabase
   : null;
 
 const outcomeModel = {
-  title: "Education Planning Outcomes",
-  geography: "Riyadh North District",
-  period: "Academic year 2024/2025",
-  confidence: "High",
-  indicators: [
-    {
-      id: "school-capacity-pressure",
-      name: "School Capacity Pressure",
-      value: "83.4%",
-      status: "Within target",
-      formula: "Total students enrolled / (Total public schools x Average school capacity)",
-      geography: "Riyadh North District",
-      period: "Academic year 2024/2025",
-      confidence: "High",
-      source: "Education enrollment extract.xlsx",
-      variables: [
-        {
-          name: "Total students enrolled",
-          value: 18420,
-          unit: "students",
-          confidence: "High",
-          sources: [
-            { name: "Education enrollment extract.xlsx", value: 18420, unit: "students", isPrimary: true },
-            { name: "Enrollment extract v2.xlsx", value: 18375, unit: "students" },
-            { name: "District enrollment audit.csv", value: 18460, unit: "students" }
-          ]
-        },
-        {
-          name: "Total public schools",
-          value: 46,
-          unit: "schools",
-          confidence: "High",
-          sources: [
-            { name: "Education enrollment extract.xlsx", value: 46, unit: "schools", isPrimary: true },
-            { name: "School facilities register.csv", value: 46, unit: "schools" },
-            { name: "Facilities register v3.csv", value: 45, unit: "schools" }
-          ]
-        },
-        {
-          name: "Average school capacity",
-          value: 480,
-          unit: "seats per school",
-          confidence: "High",
-          sources: [
-            { name: "Education enrollment extract.xlsx", value: 480, unit: "seats per school", isPrimary: true },
-            { name: "Capacity planning assumptions.pdf", value: 475, unit: "seats per school" }
-          ]
-        }
-      ],
-      assumptions: [
-        "All public schools are temporarily assigned the same average capacity.",
-        "Private school enrollment is excluded from this prototype."
-      ],
-      contexts: [
-        {
-          geography: "Riyadh North District",
-          period: "Academic year 2024/2025",
-          value: "83.4%",
-          status: "Within target",
-          confidence: "High",
-          variables: [
-            { name: "Total students enrolled", value: 18420, unit: "students", confidence: "High" },
-            { name: "Total public schools", value: 46, unit: "schools", confidence: "High" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          geography: "Riyadh South District",
-          period: "Academic year 2024/2025",
-          value: "91.1%",
-          status: "Capacity pressure",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 21000, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 48, unit: "schools", confidence: "High" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          geography: "Riyadh East District",
-          period: "Academic year 2024/2025",
-          value: "78.6%",
-          status: "Within target",
-          confidence: "High",
-          variables: [
-            { name: "Total students enrolled", value: 15840, unit: "students", confidence: "High" },
-            { name: "Total public schools", value: 42, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          geography: "Riyadh North District",
-          period: "Academic year 2023/2024",
-          value: "80.0%",
-          status: "Within target",
-          confidence: "High",
-          variables: [
-            { name: "Total students enrolled", value: 17664, unit: "students", confidence: "High" },
-            { name: "Total public schools", value: 46, unit: "schools", confidence: "High" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          geography: "Riyadh South District",
-          period: "Academic year 2023/2024",
-          value: "88.5%",
-          status: "Capacity pressure",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 20390, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 48, unit: "schools", confidence: "High" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          geography: "Riyadh East District",
-          period: "Academic year 2023/2024",
-          value: "76.2%",
-          status: "Within target",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 15362, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 42, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "governorate",
-          geography: "Riyadh Governorate",
-          period: "Academic year 2024/2025",
-          value: "86.7%",
-          status: "Capacity pressure",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 55260, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 134, unit: "schools", confidence: "High" },
-            { name: "Average school capacity", value: 475, unit: "seats per school", confidence: "Medium" }
-          ]
-        },
-        {
-          level: "governorate",
-          geography: "Diriyah Governorate",
-          period: "Academic year 2024/2025",
-          value: "79.4%",
-          status: "Within target",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 13720, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 36, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "governorate",
-          geography: "Riyadh Governorate",
-          period: "Academic year 2023/2024",
-          value: "83.2%",
-          status: "Within target",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 53020, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 134, unit: "schools", confidence: "High" },
-            { name: "Average school capacity", value: 475, unit: "seats per school", confidence: "Medium" }
-          ]
-        },
-        {
-          level: "governorate",
-          geography: "Diriyah Governorate",
-          period: "Academic year 2023/2024",
-          value: "77.1%",
-          status: "Within target",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 13320, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 36, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "region",
-          geography: "Riyadh Region",
-          period: "Academic year 2024/2025",
-          value: "84.9%",
-          status: "Within target",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 74280, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 182, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "region",
-          geography: "Makkah Region",
-          period: "Academic year 2024/2025",
-          value: "89.6%",
-          status: "Capacity pressure",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 92140, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 214, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "region",
-          geography: "Riyadh Region",
-          period: "Academic year 2023/2024",
-          value: "82.7%",
-          status: "Within target",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 72320, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 182, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "region",
-          geography: "Makkah Region",
-          period: "Academic year 2023/2024",
-          value: "87.4%",
-          status: "Capacity pressure",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 89810, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 214, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "national",
-          geography: "Saudi Arabia",
-          period: "Academic year 2024/2025",
-          value: "86.2%",
-          status: "Capacity pressure",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 4120000, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 9950, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        },
-        {
-          level: "national",
-          geography: "Saudi Arabia",
-          period: "Academic year 2023/2024",
-          value: "84.1%",
-          status: "Within target",
-          confidence: "Medium",
-          variables: [
-            { name: "Total students enrolled", value: 4017000, unit: "students", confidence: "Medium" },
-            { name: "Total public schools", value: 9950, unit: "schools", confidence: "Medium" },
-            { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "High" }
-          ]
-        }
-      ]
-    },
-    {
-      id: "average-students-school",
-      name: "Average Students per School",
-      value: "400",
-      status: "Moderate load",
-      formula: "Total students enrolled / Total public schools",
-      geography: "Riyadh North District",
-      period: "Academic year 2024/2025",
-      confidence: "High",
-      source: "School facilities register.csv",
-      variables: [
-        { name: "Total students enrolled", value: 18420, unit: "students", confidence: "High" },
-        { name: "Total public schools", value: 46, unit: "schools", confidence: "Medium" }
-      ],
-      assumptions: [
-        "All active public schools are included equally.",
-        "The result is rounded to the nearest whole student."
-      ]
-    },
-    {
-      id: "new-schools-needed",
-      name: "Estimated New Schools Needed",
-      value: "0",
-      status: "No immediate gap",
-      formula: "Max(0, Required schools at target utilization - Current schools)",
-      geography: "Riyadh North District",
-      period: "2024 baseline",
-      confidence: "Medium",
-      source: "Capacity planning assumptions.pdf",
-      variables: [
-        { name: "Total students enrolled", value: 18420, unit: "students", confidence: "High" },
-        { name: "Average school capacity", value: 480, unit: "seats per school", confidence: "Medium" },
-        { name: "Target utilization threshold", value: 85, unit: "%", confidence: "Low" },
-        { name: "Current public schools", value: 46, unit: "schools", confidence: "High" }
-      ],
-      assumptions: [
-        "New schools are estimated from average capacity, not parcel-level feasibility.",
-        "Target utilization is treated as the maximum preferred operating level."
-      ]
-    },
-    {
-      id: "coverage-readiness",
-      name: "Education Coverage Readiness",
-      value: "92%",
-      status: "Strong coverage",
-      formula: "Neighborhoods within service standard / Total neighborhoods",
-      geography: "Riyadh North District",
-      period: "Current planning cycle",
-      confidence: "Medium",
-      source: "Service access model.csv",
-      variables: [
-        { name: "Neighborhoods within standard", value: 23, unit: "neighborhoods", confidence: "Medium" },
-        { name: "Total neighborhoods", value: 25, unit: "neighborhoods", confidence: "High" }
-      ],
-      assumptions: [
-        "Coverage is based on a temporary travel-time service standard.",
-        "Neighborhood boundaries are assumed to match the planning dataset."
-      ]
-    }
-  ]
+  title: "Outcome Indicators",
+  geography: "",
+  period: "",
+  confidence: "",
+  indicators: []
 };
-
 const makeIcon = (content) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${content}</svg>`;
 const fallbackSectorIcon = makeIcon('<path d="m12 3.9 7.9 3.9-7.9 3.9-7.9-3.9z"/><path d="m4.1 12 7.9 3.9 7.9-3.9"/><path d="m4.1 16.4 7.9 3.9 7.9-3.9"/><path d="M12 11.7v8.6"/><path d="M7.8 9.9v4.2M16.2 9.9v4.2"/>');
 const uploadButtonIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 15v4h14v-4"/></svg>';
@@ -972,20 +658,16 @@ async function loadBackendOutcomeIndicators() {
   try {
     const backendIndicators = await fetchBackendOutcomeIndicators();
 
-    backendIndicators.forEach((backendIndicator) => {
-      const existingIndex = outcomeModel.indicators.findIndex((indicator) => indicator.id === backendIndicator.id);
-
-      if (existingIndex >= 0) {
-        outcomeModel.indicators.splice(existingIndex, 1, backendIndicator);
-      } else {
-        outcomeModel.indicators.push(backendIndicator);
-      }
-    });
-
+    outcomeModel.indicators = backendIndicators;
+    if (!outcomeModel.indicators.some((indicator) => indicator.id === state.activeOutcomeIndicatorId)) {
+      state.activeOutcomeIndicatorId = null;
+    }
     state.backendOutcomeLoaded = backendIndicators.length > 0;
     state.backendOutcomeError = null;
   } catch (error) {
     console.error("Failed to load outcome indicators from Supabase:", error);
+    outcomeModel.indicators = [];
+    state.activeOutcomeIndicatorId = null;
     state.backendOutcomeLoaded = false;
     state.backendOutcomeError = error.message || "Could not load outcome indicators from Supabase.";
   }
@@ -1754,6 +1436,26 @@ function renderOutcomeIndicators() {
   outcomeIndicatorDetail.hidden = true;
   outcomeIndicatorDetail.innerHTML = "";
 
+  if (!outcomeModel.indicators.length) {
+    const isLoadingOutcomes = state.isLoading || state.isRefreshing;
+    const title = state.backendOutcomeError
+      ? "Outcome indicators could not load"
+      : (isLoadingOutcomes ? "Loading formula-backed indicators" : "No formula-backed indicators yet");
+    const copy = state.backendOutcomeError
+      ? "Check Supabase access, RLS policies, and the outcome table rows used by this frontend."
+      : (isLoadingOutcomes
+        ? "The app is checking Supabase for indicators with complete formula inputs."
+        : "Add indicators with formula_python_expr and complete variable values in Supabase to show them here.");
+
+    outcomeIndicatorTabs.innerHTML = `
+      <div class="indicator-empty" role="status">
+        <strong>${escapeHtml(title)}</strong>
+        <span>${escapeHtml(copy)}</span>
+      </div>
+    `;
+    return;
+  }
+
   outcomeIndicatorTabs.innerHTML = outcomeModel.indicators.map((indicator, index) => {
     const isActive = indicator.id === activeIndicator?.id;
     const contexts = getIndicatorContexts(indicator);
@@ -1803,16 +1505,16 @@ function renderOutcome() {
   outcomeHead.classList.toggle("is-selected", Boolean(activeIndicator));
   outcomeBackButton.hidden = !activeIndicator;
   outcomeKicker.textContent = activeIndicator ? "Selected indicator" : "Outcome model";
-  outcomeTitle.textContent = activeIndicator ? activeIndicator.name : "Indicators from uploaded data";
+  outcomeTitle.textContent = activeIndicator ? activeIndicator.name : "Formula-backed indicators";
   outcomeDescription.textContent = activeIndicator
     ? "Choose a view mode to inspect one location or compare by level, period, or both."
-    : "Select an indicator to see its variables, formula, assumptions, and result.";
+    : "Select a Supabase indicator to see its variables, formula, assumptions, and result.";
   renderOutcomeAvailability(activeIndicator);
 
   outcomeStatus.textContent = activeIndicator
     ? (completeness.isComplete ? "Inputs complete" : "Missing variables")
-    : "Select indicator";
-  outcomeStatus.className = `outcome-status ${activeIndicator ? completenessTone : "is-medium"}`;
+    : (state.backendOutcomeError ? "Load issue" : (outcomeModel.indicators.length ? "Select indicator" : "No indicators"));
+  outcomeStatus.className = `outcome-status ${activeIndicator ? completenessTone : (state.backendOutcomeError ? "is-low" : "is-medium")}`;
 
   outcomeMetrics.hidden = !activeIndicator || isComparison;
   outcomeGrid.hidden = !activeIndicator || isComparison;

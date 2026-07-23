@@ -6,9 +6,8 @@ Static prototype for the DAIS indicator dashboard and outcome model.
 
 - Shows dashboard sectors and indicator counts from Supabase.
 - Lets users select sectors and attach upload files in the browser session.
-- Shows calculated outcome indicators.
-- Reads outcome indicator values from Supabase when rows are available.
-- Falls back to local demo outcome data in `app.js` when Supabase rows are not available.
+- Shows calculated outcome indicators loaded from Supabase.
+- Shows an empty state when no formula-ready outcome rows are available.
 - Calculates outcome results from variable values by geography and period.
 
 ## Run Locally
@@ -33,7 +32,7 @@ styles.css
   External copy of the same styling. Keep it in sync with index.html if editing styles.
 
 app.js
-  Main application logic, local fallback data, Supabase loading, outcome calculations,
+  Main application logic, Supabase loading, outcome calculations,
   filters, comparison table rendering, upload preview behavior, and dashboard rendering.
 
 assets/icons/
@@ -80,9 +79,9 @@ source_file_versions
 
 ## Outcome Calculation Flow
 
-1. `app.js` loads the fallback outcome model.
+1. `app.js` starts with an empty outcome model.
 2. The app requests formula-ready indicator rows from Supabase.
-3. If Supabase rows are readable, they replace or extend the fallback indicators.
+3. If Supabase rows are readable, they become the displayed outcome indicators.
 4. The UI builds variable inputs by `variable_key`.
 5. The result is calculated in the browser from `formula_python_expr` and current `variable_values`.
 6. The selected location/period view shows the variables, formula, assumptions, and result.

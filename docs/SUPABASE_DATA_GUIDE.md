@@ -2,6 +2,8 @@
 
 The app reads Supabase directly from the browser. Tables used by the frontend must have row-level security policies that permit safe public `select` access. Do not expose service-role credentials in this repository.
 
+Outcome indicators are not hard-coded in the UI. If no formula-ready Supabase rows are available, the outcome page displays an empty state.
+
 ## Dashboard Counts
 
 The dashboard reads sector counts from:

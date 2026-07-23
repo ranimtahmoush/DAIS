@@ -1,6 +1,6 @@
 # App Maintenance Guide
 
-This app is a static HTML/CSS/JS prototype. It has no build step, package install, or local backend. Runtime data comes from the Supabase client in `app.js`, with fallback demo outcome data kept in the same file.
+This app is a static HTML/CSS/JS prototype. It has no build step, package install, or local backend. Runtime data comes from the Supabase client in `app.js`.
 
 ## Runtime Flow
 
@@ -12,7 +12,7 @@ This app is a static HTML/CSS/JS prototype. It has no build step, package instal
 6. The UI renders dashboard cards, upload state, outcome cards, filters, and comparison tables from the in-memory `state` object.
 7. Dashboard counts refresh every `AUTO_REFRESH_MS`.
 
-If Supabase is unavailable or a query fails, the dashboard falls back to local sector definitions and the outcome page keeps local demo indicators.
+If Supabase is unavailable or a query fails, the dashboard falls back to local sector definitions. The outcome page shows an empty/load-error state because outcome indicators are intentionally Supabase-driven.
 
 ## Main Files
 
@@ -29,7 +29,7 @@ If Supabase is unavailable or a query fails, the dashboard falls back to local s
 `app.js`
 
 - Owns app state, Supabase reads, sector grouping, formula calculation, upload previews, modal behavior, and rendering.
-- Contains fallback outcome data under `outcomeModel`.
+- Starts `outcomeModel.indicators` empty and fills it from formula-ready Supabase rows.
 
 `assets/icons/`
 
@@ -79,7 +79,7 @@ The outcome page supports:
 - variable source listings
 - formula and result display
 
-Backend indicators replace or extend fallback indicators when their `uid` matches an existing fallback indicator id. This allows a Supabase-backed version of a demo indicator to take over without changing the UI.
+Backend indicators replace the current outcome list on each successful load. Indicators must come from Supabase rows with usable formulas and complete variable contexts.
 
 ## Formula Calculation
 
@@ -136,4 +136,4 @@ Change upload file support:
 - Never put a Supabase service-role key in this frontend.
 - Treat the publishable key as read-only and rely on RLS policies.
 - Use signed URLs or a backend endpoint for private Supabase Storage files.
-- Keep fallback data small enough that `app.js` remains easy to review.
+- Keep any future demo-only data out of the runtime path unless the product explicitly needs a demo mode.
