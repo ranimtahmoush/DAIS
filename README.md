@@ -47,7 +47,15 @@ assets/icons-before-ai-grid/
 
 scripts/
   Helper PowerShell scripts used for icon extraction and cleanup.
+
+docs/
+  Maintenance notes for the app, Supabase data model, formulas, uploads, and assets.
 ```
+
+## Documentation
+
+- [App maintenance guide](docs/APP_MAINTENANCE.md) explains the runtime flow, UI state, upload behavior, assets, and common edit points.
+- [Supabase data guide](docs/SUPABASE_DATA_GUIDE.md) explains the tables, required rows, formula rules, source file versions, and troubleshooting checks.
 
 ## Supabase Tables Used
 
