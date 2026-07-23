@@ -885,6 +885,48 @@ h2 {
   align-content: center;
 }
 
+.outcome-head-actions {
+  display: grid;
+  justify-items: end;
+  gap: 12px;
+}
+
+.outcome-logo {
+  position: relative;
+  width: 310px;
+  max-width: 32vw;
+  height: 70px;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(135deg, #0f4d48 0%, #0d5b54 58%, #164c47 100%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 12px 28px rgba(2, 18, 32, 0.16);
+}
+
+.outcome-logo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 58px),
+    linear-gradient(45deg, transparent 0 70%, rgba(255, 255, 255, 0.08) 70% 100%);
+}
+
+.outcome-logo-image {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 282px;
+  height: 100%;
+  margin: 0 auto;
+  object-fit: cover;
+  object-position: center;
+  mix-blend-mode: screen;
+  filter: grayscale(1) brightness(3.9) contrast(1.16);
+  opacity: 0.98;
+}
+
 .outcome-kicker,
 .outcome-label {
   color: var(--teal-dark);
@@ -985,7 +1027,7 @@ h2 {
 }
 
 .outcome-status.is-high {
-  background: var(--green);
+  background: var(--teal);
 }
 
 .outcome-status.is-medium {
@@ -2104,6 +2146,15 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .outcome-head-actions {
+    justify-items: start;
+  }
+
+  .outcome-logo {
+    width: min(310px, 100%);
+    max-width: 100%;
+  }
+
   .context-mode-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2183,7 +2234,12 @@ h2 {
               <p class="muted" id="outcome-description">Select a Supabase indicator to see its variables, formula, assumptions, and result.</p>
               <p class="outcome-availability" id="outcome-availability" hidden></p>
             </div>
-            <span class="outcome-status" id="outcome-status">Checking inputs</span>
+            <div class="outcome-head-actions">
+              <div class="outcome-logo" aria-label="Makkah Province Development Authority">
+                <img class="outcome-logo-image" src="assets/MPDA_Survey_Logo.png" alt="Makkah Province Development Authority">
+              </div>
+              <span class="outcome-status" id="outcome-status">Checking inputs</span>
+            </div>
           </div>
 
           <section class="indicator-strip" aria-labelledby="indicator-tabs-title">
