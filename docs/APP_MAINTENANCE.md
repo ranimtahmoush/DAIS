@@ -66,6 +66,8 @@ Uploads are local browser-session objects only.
 - Office documents are listed with metadata but are not previewed.
 - Uploaded files are not parsed and are not written back to Supabase.
 
+Uploads also drive the Outcome page. Each upload stores a session `id` and a `sourceVersionIds` array. The frontend does not write upload results to Supabase. Instead, it emits a `dais:upload-created` browser event for the upload/AI pipeline. After that pipeline creates `source_file_versions` and `variable_values` rows, it must call `window.daisUploadIntegration.setSourceVersionIds(uploadId, versionIds)`. The Outcome page only shows indicators whose linked `variable_values.version_id` values overlap with uploaded source version ids.
+
 When removing files, `revokeUpload()` releases object URLs so the browser does not keep unnecessary blob references.
 
 ## Outcome UI

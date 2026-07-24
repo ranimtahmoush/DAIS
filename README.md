@@ -55,6 +55,7 @@ docs/
 
 - [App maintenance guide](docs/APP_MAINTENANCE.md) explains the runtime flow, UI state, upload behavior, assets, and common edit points.
 - [Supabase data guide](docs/SUPABASE_DATA_GUIDE.md) explains the tables, required rows, formula rules, source file versions, and troubleshooting checks.
+- [AI agent integration guide](docs/AI_AGENT_INTEGRATION.md) explains how the upload/AI pipeline should connect source files to Outcome indicators.
 
 ## Supabase Tables Used
 

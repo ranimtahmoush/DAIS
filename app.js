@@ -410,6 +410,15 @@ function buildBackendOutcomeIndicator({
   const periodsById = new Map(periods.map((period) => [period.period_id, period]));
   const versionsById = new Map(versions.map((version) => [version.version_id, version]));
   const requiredVariableValues = variableValues.filter((row) => requiredVariableIds.has(row.variable_id));
+  const sourceVersionIds = uniqueIds(requiredVariableValues.map((row) => row.version_id));
+  const sourceFileVersions = sourceVersionIds
+    .map((versionId) => versionsById.get(versionId))
+    .filter(Boolean)
+    .map((version) => ({
+      versionId: version.version_id,
+      name: getSourceFileLabel(version),
+      fileUri: version.file_uri || ""
+    }));
   const requiredValuesByContext = requiredVariableValues.reduce((groups, row) => {
     const key = `${row.geography_id}::${row.period_id}`;
 
@@ -514,6 +523,7 @@ function buildBackendOutcomeIndicator({
     id: indicator.uid || String(indicator.indicator_id),
     databaseId: indicator.indicator_id,
     name: indicator.name,
+    sector: indicator.sector || "",
     value: baseContext.value || "Pending",
     formula: indicator.formula_description || indicator.formula_python_expr || "",
     formula_python_expr: indicator.formula_python_expr || "",
@@ -521,6 +531,8 @@ function buildBackendOutcomeIndicator({
     period: baseContext.period || "",
     confidence: baseContext.confidence || "High",
     source: versions[0]?.file_uri || "",
+    sourceVersionIds,
+    sourceFileVersions,
     variables: baseContext.variables || [],
     assumptions: baseContext.assumptions || [],
     contexts
@@ -659,7 +671,8 @@ async function loadBackendOutcomeIndicators() {
     const backendIndicators = await fetchBackendOutcomeIndicators();
 
     outcomeModel.indicators = backendIndicators;
-    if (!outcomeModel.indicators.some((indicator) => indicator.id === state.activeOutcomeIndicatorId)) {
+    refreshUploadSourceMatches();
+    if (!getVisibleOutcomeIndicators().some((indicator) => indicator.id === state.activeOutcomeIndicatorId)) {
       state.activeOutcomeIndicatorId = null;
     }
     state.backendOutcomeLoaded = backendIndicators.length > 0;
@@ -850,8 +863,104 @@ function getIndicatorConfidence(indicator) {
   }, "High");
 }
 
+function normalizeSourceFileName(value) {
+  return String(value || "")
+    .trim()
+    .split(/[\\/]/)
+    .pop()
+    .toLowerCase();
+}
+
+function getFileStem(value) {
+  return normalizeSourceFileName(value).replace(/\.[^.]+$/, "");
+}
+
+function getExplicitSourceVersionIds(upload) {
+  const text = [upload.name, upload.entityName].join(" ");
+  const ids = [...text.matchAll(/(?:source[_\s-]*version|source[_\s-]*file|version[_\s-]*id|version)[_\s:#-]*(\d+)/gi)]
+    .map((match) => Number(match[1]))
+    .filter(Number.isFinite);
+  const sourceText = String(upload.entityName || "").trim();
+
+  if (/^\d+$/.test(sourceText)) {
+    ids.push(Number(sourceText));
+  }
+
+  return uniqueIds(ids);
+}
+
+function getKnownSourceFileVersions() {
+  const versionsById = new Map();
+
+  outcomeModel.indicators.forEach((indicator) => {
+    (indicator.sourceFileVersions || []).forEach((version) => {
+      if (version.versionId) {
+        versionsById.set(version.versionId, version);
+      }
+    });
+  });
+
+  return [...versionsById.values()];
+}
+
+function getUploadSourceVersionIds(upload) {
+  const explicitVersionIds = getExplicitSourceVersionIds(upload);
+  const uploadName = normalizeSourceFileName(upload.name);
+  const uploadStem = getFileStem(upload.name);
+  const matchedVersionIds = getKnownSourceFileVersions()
+    .filter((version) => {
+      const versionName = normalizeSourceFileName(version.fileUri || version.name);
+      const versionStem = getFileStem(version.fileUri || version.name);
+
+      return explicitVersionIds.includes(version.versionId)
+        || (uploadName && versionName && uploadName === versionName)
+        || (uploadStem && versionStem && uploadStem === versionStem);
+    })
+    .map((version) => version.versionId);
+
+  return uniqueIds([...explicitVersionIds, ...matchedVersionIds]);
+}
+
+function refreshUploadSourceMatches() {
+  state.uploads.forEach((upload) => {
+    upload.sourceVersionIds = getUploadSourceVersionIds(upload);
+  });
+}
+
+function getLatestUploadStatusMessage() {
+  const upload = state.uploads.find((entry) => entry.integrationMessage);
+  return upload?.integrationMessage || "";
+}
+
+async function setUploadSourceVersionIds(uploadId, sourceVersionIds, message = "Source file linked") {
+  const upload = state.uploads.find((entry) => entry.id === uploadId);
+
+  if (!upload) {
+    throw new Error(`Upload ${uploadId} was not found.`);
+  }
+
+  upload.sourceVersionIds = uniqueIds(sourceVersionIds.map(Number).filter(Number.isFinite));
+  upload.integrationStatus = upload.sourceVersionIds.length ? "linked" : "pending";
+  upload.integrationMessage = message;
+  await loadBackendOutcomeIndicators();
+  render();
+  return upload;
+}
+
+function getVisibleOutcomeIndicators() {
+  const uploadedSourceVersionIds = new Set(state.uploads.flatMap((upload) => upload.sourceVersionIds || []));
+
+  if (!state.uploads.length) {
+    return [];
+  }
+
+  return outcomeModel.indicators.filter((indicator) => {
+    return (indicator.sourceVersionIds || []).some((versionId) => uploadedSourceVersionIds.has(versionId));
+  });
+}
+
 function getActiveOutcomeIndicator() {
-  return outcomeModel.indicators.find((indicator) => indicator.id === state.activeOutcomeIndicatorId) || null;
+  return getVisibleOutcomeIndicators().find((indicator) => indicator.id === state.activeOutcomeIndicatorId) || null;
 }
 
 function getContextKey(context) {
@@ -1253,7 +1362,7 @@ function renderOutcomeAvailability(indicator) {
   outcomeAvailability.hidden = !indicator;
   outcomeAvailability.innerHTML = indicator
     ? `
-      <span><strong>Available levels:</strong> ${escapeHtml(levels.join(", "))}</span>
+      <span><strong>Available Geography Levels:</strong> ${escapeHtml(levels.join(", "))}</span>
       <span><strong>Available periods:</strong> ${escapeHtml(periods.join(", "))}</span>
     `
     : "";
@@ -1431,21 +1540,27 @@ function renderAvailableChips(values, visibleCount = 4) {
 function renderOutcomeIndicators() {
   const activeIndicator = getActiveOutcomeIndicator();
   const isDetailPage = Boolean(activeIndicator);
+  const visibleIndicators = getVisibleOutcomeIndicators();
+  const hasUploads = state.uploads.length > 0;
 
   outcomeIndicatorStrip.hidden = isDetailPage;
+  outcomeIndicatorStrip.classList.toggle("is-empty", !visibleIndicators.length);
   outcomeIndicatorDetail.hidden = true;
   outcomeIndicatorDetail.innerHTML = "";
 
-  if (!outcomeModel.indicators.length) {
+  if (!visibleIndicators.length) {
     const isLoadingOutcomes = state.isLoading || state.isRefreshing;
-    const title = state.backendOutcomeError
-      ? "Outcome indicators could not load"
-      : (isLoadingOutcomes ? "Loading formula-backed indicators" : "No formula-backed indicators yet");
-    const copy = state.backendOutcomeError
-      ? "Check Supabase access, RLS policies, and the outcome table rows used by this frontend."
-      : (isLoadingOutcomes
-        ? "The app is checking Supabase for indicators with complete formula inputs."
-        : "Add indicators with formula_python_expr and complete variable values in Supabase to show them here.");
+    const latestUploadMessage = getLatestUploadStatusMessage();
+    const title = hasUploads
+      ? (state.backendOutcomeError ? "Outcome indicators could not load" : "No indicators extracted from uploaded files")
+      : "No file selected";
+    const copy = hasUploads
+      ? (state.backendOutcomeError
+        ? "Check Supabase access, RLS policies, and the outcome table rows used by this frontend."
+        : (isLoadingOutcomes
+          ? "Checking the uploaded file against source file versions in the database."
+          : (latestUploadMessage || "Waiting for source_file_versions.version_id from the AI upload pipeline.")))
+      : "Upload a file from the dashboard to reveal indicators found in it.";
 
     outcomeIndicatorTabs.innerHTML = `
       <div class="indicator-empty" role="status">
@@ -1456,21 +1571,34 @@ function renderOutcomeIndicators() {
     return;
   }
 
-  outcomeIndicatorTabs.innerHTML = outcomeModel.indicators.map((indicator, index) => {
+  outcomeIndicatorTabs.innerHTML = visibleIndicators.map((indicator, index) => {
     const isActive = indicator.id === activeIndicator?.id;
+    const completeness = getOutcomeCompleteness(indicator);
     const contexts = getIndicatorContexts(indicator);
     const availableLevels = getAvailableLevels(contexts, true).map((level) => levelLabels[level] || level);
     const availablePeriods = getUniqueContextValues(contexts, "period");
+    const variableCount = `${completeness.completed}/${completeness.required}`;
+    const sectorLabel = String(indicator.sector || "").trim();
 
     return `
       <button class="indicator-tab ${isActive ? "is-active" : ""}" type="button" role="tab" aria-selected="${isActive}" data-outcome-indicator-id="${indicator.id}">
+        <span class="indicator-variable-count" aria-label="${escapeHtml(variableCount)} variables available">
+          <span>Variables</span>
+          <strong>${escapeHtml(variableCount)}</strong>
+        </span>
         <span class="indicator-card-head">
           <span class="outcome-label">Indicator ${index + 1}</span>
         </span>
         <span class="indicator-tab-name">${escapeHtml(indicator.name)}</span>
         <span class="indicator-card-meta">
+          ${sectorLabel ? `
+            <span>
+              <span class="outcome-label">Sector</span>
+              <strong>${renderAvailableChips([sectorLabel], 1)}</strong>
+            </span>
+          ` : ""}
           <span>
-            <span class="outcome-label">Available levels</span>
+            <span class="outcome-label">Available Geography Levels</span>
             <strong>${renderAvailableChips(availableLevels)}</strong>
           </span>
           <span>
@@ -1492,6 +1620,8 @@ function renderOutcomeIndicators() {
 
 function renderOutcome() {
   const activeIndicator = getActiveOutcomeIndicator();
+  const visibleIndicators = getVisibleOutcomeIndicators();
+  const hasUploads = state.uploads.length > 0;
   const modeState = activeIndicator ? getOutcomeModeState(activeIndicator) : null;
   const selectedContexts = activeIndicator ? getContextsForMode(activeIndicator, modeState) : [];
   const activeContext = selectedContexts[0] || activeIndicator;
@@ -1505,15 +1635,18 @@ function renderOutcome() {
   outcomeHead.classList.toggle("is-selected", Boolean(activeIndicator));
   outcomeBackButton.hidden = !activeIndicator;
   outcomeKicker.textContent = activeIndicator ? "Selected indicator" : "Outcome model";
-  outcomeTitle.textContent = activeIndicator ? activeIndicator.name : "Formula-backed indicators";
+  outcomeTitle.textContent = activeIndicator ? activeIndicator.name : "Indicators from uploaded data";
+  outcomeDescription.hidden = !activeIndicator;
   outcomeDescription.textContent = activeIndicator
     ? "Choose a view mode to inspect one location or compare by level, period, or both."
-    : "Select a Supabase indicator to see its variables, formula, assumptions, and result.";
+    : (hasUploads
+      ? "Showing indicators extracted from uploaded files."
+      : "Upload a file from the dashboard to reveal indicators found in that file.");
   renderOutcomeAvailability(activeIndicator);
 
   outcomeStatus.textContent = activeIndicator
     ? (completeness.isComplete ? "Inputs complete" : "Missing variables")
-    : (state.backendOutcomeError ? "Load issue" : (outcomeModel.indicators.length ? "Select indicator" : "No indicators"));
+    : (state.backendOutcomeError ? "Load issue" : (visibleIndicators.length ? "Select indicator" : (hasUploads ? "No matches" : "Waiting for file")));
   outcomeStatus.className = `outcome-status ${activeIndicator ? completenessTone : (state.backendOutcomeError ? "is-low" : "is-medium")}`;
 
   outcomeMetrics.hidden = !activeIndicator || isComparison;
@@ -1618,7 +1751,7 @@ function closeUploadMetadataModal() {
   uploadMetadataError.hidden = true;
 }
 
-function submitUploadMetadata() {
+async function submitUploadMetadata() {
   const pendingUpload = state.pendingUploadRequest;
   const entityName = uploadEntityNameInput.value.trim();
   const period = uploadPeriodInput.value.trim();
@@ -1634,14 +1767,60 @@ function submitUploadMetadata() {
     return;
   }
 
-  addUploads(pendingUpload.files, pendingUpload.targetIds, {
+  const files = pendingUpload.files;
+  const targetIds = pendingUpload.targetIds;
+
+  closeUploadMetadataModal();
+  await addUploads(files, targetIds, {
     entityName,
     period
   });
-  closeUploadMetadataModal();
 }
 
-function addUploads(files, targetIds, metadata = {}) {
+function dispatchUploadCreated(upload) {
+  window.dispatchEvent(new CustomEvent("dais:upload-created", {
+    detail: {
+      uploadId: upload.id,
+      file: upload.file,
+      fileName: upload.name,
+      fileType: upload.type,
+      extension: upload.extension,
+      entityName: upload.entityName,
+      period: upload.period,
+      targets: upload.targets.map((target) => ({
+        id: target.id,
+        type: target.type,
+        label: target.label,
+        category: target.category?.title || ""
+      }))
+    }
+  }));
+}
+
+window.daisUploadIntegration = {
+  getUploads() {
+    return state.uploads.map((upload) => ({
+      id: upload.id,
+      name: upload.name,
+      entityName: upload.entityName,
+      period: upload.period,
+      targets: upload.targets.map((target) => ({
+        id: target.id,
+        type: target.type,
+        label: target.label,
+        category: target.category?.title || ""
+      })),
+      sourceVersionIds: [...(upload.sourceVersionIds || [])],
+      integrationStatus: upload.integrationStatus,
+      integrationMessage: upload.integrationMessage
+    }));
+  },
+  setSourceVersionIds(uploadId, sourceVersionIds, message) {
+    return setUploadSourceVersionIds(uploadId, sourceVersionIds, message);
+  }
+};
+
+async function addUploads(files, targetIds, metadata = {}) {
   const normalizedTargets = [...new Set(targetIds)].map(getTarget).filter(Boolean);
 
   if (!files.length || !normalizedTargets.length) {
@@ -1649,7 +1828,7 @@ function addUploads(files, targetIds, metadata = {}) {
   }
 
   [...files].forEach((file) => {
-    state.uploads.unshift({
+    const upload = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       name: file.name,
       size: file.size,
@@ -1660,8 +1839,19 @@ function addUploads(files, targetIds, metadata = {}) {
       targets: normalizedTargets,
       entityName: metadata.entityName || "",
       period: metadata.period || "",
+      sourceVersionIds: [],
+      integrationStatus: "pending",
+      integrationMessage: "Waiting for AI source file link",
       addedAt: new Date()
-    });
+    };
+
+    upload.sourceVersionIds = getUploadSourceVersionIds(upload);
+    if (upload.sourceVersionIds.length) {
+      upload.integrationStatus = "linked";
+      upload.integrationMessage = `source version: ${upload.sourceVersionIds.join(", ")}`;
+    }
+    state.uploads.unshift(upload);
+    dispatchUploadCreated(upload);
   });
 
   render();
@@ -1677,6 +1867,7 @@ function renderFileList() {
           formatBytes(upload.size),
           upload.entityName ? `entity: ${upload.entityName}` : "",
           upload.period ? `period: ${upload.period}` : "",
+          upload.integrationMessage || "",
           `attached to ${targetLabel}`
         ].filter(Boolean).join(" | ");
 
